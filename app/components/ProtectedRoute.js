@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import useAuth from "../hooks/useAuth";
+import useAuth from "../hooks/UseAuth";
 
 const ProtectedRoute = ({children}) => {
   const session = useAuth();

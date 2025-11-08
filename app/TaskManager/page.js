@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import supabase from "../supabase-client";
-import useAuth from "../hooks/useAuth";
+import useAuth from "../hooks/UseAuth";
 import ProtectedRoute from "../components/ProtectedRoute";
 
 export default function TaskManager() {

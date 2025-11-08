@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import supabase from "../supabase-client";
 import { useRouter } from "next/navigation";
-import useAuth from "../hooks/useAuth";
+import useAuth from "../hooks/UseAuth";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
