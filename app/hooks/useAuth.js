@@ -3,8 +3,8 @@ import { AuthContext } from "../context/AuthContext";
 
 const useAuth = () => {
   // get the session from the context
-  const session = useContext(AuthContext);
-  return session;
+  const { session, loading } = useContext(AuthContext);
+  return { session, loading };
 };
 
 export default useAuth;

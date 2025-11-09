@@ -5,9 +5,9 @@ import useAuth from "../hooks/UseAuth";
 import ProtectedRoute from "../components/ProtectedRoute";
 
 export default function TaskManager() {
-  const session = useAuth();
+  const { session, loading } = useAuth();
   const email = session?.user?.email;
-  console.log("User email from session:", email);
+
   // states
   const [newTask, setNewTask] = useState({ title: "", description: "" });
   // This holds the tasks that exist already and can be updated or deleted
@@ -17,11 +17,21 @@ export default function TaskManager() {
   // submitting the form
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("New Task:", newTask);
+
+    if (!session?.user?.email) {
+      console.error("No user session found. Cannot create task yet.");
+      return;
+    }
+
+    // Create a new object that includes the email
+    const taskToInsert = {
+      ...newTask,
+      email: session.user.email,
+    };
 
     const { data, error } = await supabase
       .from("Task")
-      .insert(newTask)
+      .insert(taskToInsert)
       .select()
       .single();
 
@@ -39,18 +49,6 @@ export default function TaskManager() {
     setNewTask({ title: "", description: "" });
   };
 
-  // Update email in newTask whenever session changes.
-  // This is done because when the user sign in, he is redirected
-  // to the TaskManager, but it takes time for session to be fetched
-  // from supabase, so during that time it is undefined and when
-  // the session arrives we use this useEffect to set the email in newTask.
-  useEffect(() => {
-    const updateEmail = async () => {
-      setNewTask((prev) => ({ ...prev, email: session?.user?.email }));
-    };
-    updateEmail();
-  }, [session]);
-
   // fetch all the available tasks
   useEffect(() => {
     // Define the async function inside useEffect to avoid ESLint warning about calling setState (setTasks) synchronously in the effect body.
@@ -67,23 +65,18 @@ export default function TaskManager() {
         // Filter out tasks with null or empty titles to avoid rendering errors
         const validTasks = data.filter((task) => task && task.title);
         setTasks(validTasks);
-        console.log("Fetched tasks:", data);
       }
     };
     fetchTasks();
   }, []);
 
   const deleteTask = async (id) => {
-    console.log("Attempting to delete task with id:", id);
-
     // This actually DELETES the row from the database, not just nullifies it
     const { data, error } = await supabase
       .from("Task")
       .delete()
       .eq("id", id)
       .select(); // Add .select() to see what was deleted
-
-    console.log("Delete response:", { data, error });
 
     if (error) {
       console.error("Error deleting task:", error);
@@ -183,6 +176,7 @@ export default function TaskManager() {
 
                 <button
                   type="submit"
+                  disabled={loading || !session} // disable it the session is in loading phase or does not exist
                   className="inline-flex items-center justify-center rounded-full bg-zinc-100 px-5 py-3 text-sm font-semibold text-zinc-900 shadow-sm transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-zinc-200/40"
                 >
                   Add task

@@ -3,9 +3,10 @@
 import { useState } from "react";
 import supabase from "../supabase-client";
 import { useRouter } from "next/navigation";
-
+import useAuth from "../hooks/UseAuth";
 const Auth = () => {
   const router = useRouter();
+  const session = useAuth();
 
   //states
   const [isSignUp, setIsSignUp] = useState(false);

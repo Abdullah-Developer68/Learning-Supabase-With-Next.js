@@ -20,13 +20,13 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <AuthProviderWrapper>
-      <html lang="en">
-        <body className={`${geistSans.variable} ${geistMono.variable}`}>
+    <html lang="en">
+      <body className={`${geistSans.variable} ${geistMono.variable}`}>
+        <AuthProviderWrapper>
           <Navbar />
           {children}
-        </body>
-      </html>
-    </AuthProviderWrapper>
+        </AuthProviderWrapper>
+      </body>
+    </html>
   );
 }

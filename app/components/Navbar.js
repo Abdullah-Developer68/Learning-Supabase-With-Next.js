@@ -9,7 +9,7 @@ import useAuth from "../hooks/UseAuth";
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
-  const session = useAuth();
+  const { session, loading } = useAuth();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -32,20 +32,22 @@ export default function Navbar() {
           >
             Dashboard
           </Link>
-          {session ? (
-            <button
-              onClick={handleLogout}
-              className="inline-flex items-center justify-center rounded-full bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-900 shadow-sm transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-zinc-200/40"
-            >
-              Logout
-            </button>
-          ) : (
-            <Link
-              href="/Auth"
-              className="inline-flex items-center justify-center rounded-full bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-900 shadow-sm transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-zinc-200/40"
-            >
-              Sign In
-            </Link>
+          {!loading && (
+            session ? (
+              <button
+                onClick={handleLogout}
+                className="inline-flex items-center justify-center rounded-full bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-900 shadow-sm transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-zinc-200/40"
+              >
+                Logout
+              </button>
+            ) : (
+              <Link
+                href="/Auth"
+                className="inline-flex items-center justify-center rounded-full bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-900 shadow-sm transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-zinc-200/40"
+              >
+                Sign In
+              </Link>
+            )
           )}
         </div>
 

@@ -7,12 +7,14 @@ const AuthContext = createContext(null);
 // create provider component
 const AuthProvider = ({ children }) => {
   const [session, setSession] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // get session from supabase on component mount
     const fetchSession = async () => {
       const currentSession = await supabase.auth.getSession();
       setSession(currentSession.data.session);
+      setLoading(false);
       console.log(currentSession);
     };
     fetchSession();
@@ -22,13 +24,15 @@ const AuthProvider = ({ children }) => {
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setSession(session);
-      }
+      },
     );
   }, []);
 
+ 
+
   return (
     <>
-      <AuthContext value={session}>{children}</AuthContext>
+      <AuthContext value={{ session, loading }}>{children}</AuthContext>
     </>
   );
 };
