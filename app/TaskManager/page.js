@@ -49,7 +49,40 @@ export default function TaskManager() {
     setNewTask({ title: "", description: "" });
   };
 
-  // fetch all the available tasks
+  const deleteTask = async (id) => {
+    // This actually DELETES the row from the database, not just nullifies it
+    const { data, error } = await supabase.from("Task").delete().eq("id", id);
+
+    if (error) {
+      console.error("Error deleting task:", error);
+      return;
+    }
+
+    // Update the tasks state to remove the deleted task from UI
+    setTasks((prevTasks) => prevTasks.filter((task) => task.id !== id));
+  };
+
+  const updateTaskDescription = async (id) => {
+    const { data, error } = await supabase
+      .from("Task")
+      .update({ description: newDescription })
+      .eq("id", id)
+      .single();
+
+    if (error) {
+      console.error("Error updating task description:", error);
+      return;
+    }
+
+    // Update the tasks state to reflect the updated description
+    setTasks((prevTasks) =>
+      prevTasks.map((task) =>
+        task.id === id ? { ...task, description: newDescription } : task,
+      ),
+    );
+  };
+
+  // fetch all the available tasks on initial mount
   useEffect(() => {
     // Define the async function inside useEffect to avoid ESLint warning about calling setState (setTasks) synchronously in the effect body.
     // This prevents cascading renders by ensuring setState is called within an async callback, not directly in the effect.
@@ -70,37 +103,57 @@ export default function TaskManager() {
     fetchTasks();
   }, []);
 
-  const deleteTask = async (id) => {
-    // This actually DELETES the row from the database, not just nullifies it
-    const { data, error } = await supabase.from("Task").delete().eq("id", id);
+  // this is for real time updates
+  useEffect(() => {
+    if (!email) return;
 
-    if (error) {
-      console.error("Error deleting task:", error);
-      return;
-    }
+    // create a channel
+    const channel = supabase.channel("tasks-channel");
+    // create a channel on these conditions and then return payload in the callback as paramater that can be used to do real time updates
+    channel.on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "Task" }, // Listen to all events
+      (payload) => {
+        // the channel will give the latest data that it gets from any other devices here and then we can use it to show the channels here it eliminates the need to use websockets
+        const { eventType, new: newTask, old: oldTask } = payload;
+        console.log(
+          `Real-time ${eventType} event received:`,
+          newTask || oldTask,
+        );
 
-    // Update the tasks state to remove the deleted task from UI
-    setTasks((prevTasks) => prevTasks.filter((task) => task.id !== id));
-  };
-  const updateTaskDescription = async (id) => {
-    const { data, error } = await supabase
-      .from("Task")
-      .update({ description: newDescription })
-      .eq("id", id)
-      .single();
-
-    if (error) {
-      console.error("Error updating task description:", error);
-      return;
-    }
-
-    // Update the tasks state to reflect the updated description
-    setTasks((prevTasks) =>
-      prevTasks.map((task) =>
-        task.id === id ? { ...task, description: newDescription } : task,
-      ),
+        const taskToCheck = eventType === "DELETE" ? oldTask : newTask;
+        // Only add the task if it's from another user (not the current device)
+        // because when the task is inserted for the same device payload will be
+        //  triggered as well and we do not want duplicate data
+        if (taskToCheck.email !== email) {
+          setTasks((prevTasks) => {
+            if (eventType === "INSERT") return [...prevTasks, newTask];
+            else if (eventType === "UPDATE") {
+              const updatedTasks = prevTasks.map((prevTask) => {
+                if (prevTask.id === newTask.id) {
+                  return newTask; // Replace the matching task with the new one
+                }
+                return prevTask; // Keep other tasks the same
+              });
+              return updatedTasks;
+            } else if (eventType === "DELETE") {
+              const updatedTasks = prevTasks.filter(
+                (prevTask) => prevTask.id !== oldTask.id,
+              );
+              return updatedTasks;
+            }
+          });
+        }
+      },
     );
-  };
+    // This will establish the channel
+    channel.subscribe();
+
+    return () => {
+      // Cleanup: Unsubscribe when the component unmounts. This will save resources
+      supabase.removeChannel(channel);
+    };
+  }, [email]); // email was added as because it is undefined initally and after fetching the session it gets the value so the useEffect needs latest access to it
 
   return (
     <ProtectedRoute>
