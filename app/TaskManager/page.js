@@ -72,11 +72,7 @@ export default function TaskManager() {
 
   const deleteTask = async (id) => {
     // This actually DELETES the row from the database, not just nullifies it
-    const { data, error } = await supabase
-      .from("Task")
-      .delete()
-      .eq("id", id)
-      .select(); // Add .select() to see what was deleted
+    const { data, error } = await supabase.from("Task").delete().eq("id", id);
 
     if (error) {
       console.error("Error deleting task:", error);
