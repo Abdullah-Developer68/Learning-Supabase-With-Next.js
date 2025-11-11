@@ -13,6 +13,29 @@ export default function TaskManager() {
   // This holds the tasks that exist already and can be updated or deleted
   const [tasks, setTasks] = useState([]);
   const [newDescription, setNewDescription] = useState("");
+  const [taskImg, setTaskImg] = useState(null);
+
+  const uploadImage = async (file) => {
+    // create file path
+    const filePath = `${file.name}-${Date.now()}`;
+    // upload the file in the bucket
+    const { error } = await supabase.storage
+      .from("taskImages")
+      .upload(filePath, file);
+
+    if (error) {
+      console.error(error);
+      return null;
+    }
+    // get the url of the image file
+    const { data } = supabase.storage
+      .from("taskImages")
+      .getPublicUrl(filePath);
+    
+    console.log("Image URL:", data.publicUrl);
+
+    return data.publicUrl;
+  };
 
   // submitting the form
   const handleSubmit = async (e) => {
@@ -23,10 +46,17 @@ export default function TaskManager() {
       return;
     }
 
+    let imgUrl = null;
+
+    if (taskImg) {
+      imgUrl = await uploadImage(taskImg);
+    }
+
     // Create a new object that includes the email
     const taskToInsert = {
       ...newTask,
       email: session.user.email,
+      imgUrl,
     };
 
     const { data, error } = await supabase
@@ -155,6 +185,12 @@ export default function TaskManager() {
     };
   }, [email]); // email was added as because it is undefined initally and after fetching the session it gets the value so the useEffect needs latest access to it
 
+  const handleFileChange = (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setTaskImg(e.target.files[0]); // get the first file in the array
+    }
+  };
+
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-zinc-950 text-zinc-100">
@@ -222,7 +258,12 @@ export default function TaskManager() {
                     }
                   />
                 </div>
-
+                {/* This is used to accept images for the tasks */}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleFileChange(e)}
+                />
                 <button
                   type="submit"
                   disabled={loading || !session} // disable it the session is in loading phase or does not exist
