@@ -17,7 +17,7 @@ export default function TaskManager() {
 
   const uploadImage = async (file) => {
     // create file path
-    const filePath = `${file.name}-${Date.now()}`;
+    const filePath = `private/${file.name}-${Date.now()}`;
     // upload the file in the bucket
     const { error } = await supabase.storage
       .from("taskImages")
@@ -28,10 +28,8 @@ export default function TaskManager() {
       return null;
     }
     // get the url of the image file
-    const { data } = supabase.storage
-      .from("taskImages")
-      .getPublicUrl(filePath);
-    
+    const { data } = supabase.storage.from("taskImages").getPublicUrl(filePath);
+
     console.log("Image URL:", data.publicUrl);
 
     return data.publicUrl;
@@ -310,6 +308,9 @@ export default function TaskManager() {
                                 <p className="mt-1 text-sm text-zinc-400">
                                   {task.description}
                                 </p>
+                                {task.imgUrl && (
+                                  <img src={task.imgUrl} alt="task img" />
+                                )}
                               </div>
                               <button
                                 type="button"
