@@ -10,6 +10,7 @@ export default function TaskManager() {
 
   // states
   const [newTask, setNewTask] = useState({ title: "", description: "" });
+
   // This holds the tasks that exist already and can be updated or deleted
   const [tasks, setTasks] = useState([]);
   const [newDescription, setNewDescription] = useState("");
